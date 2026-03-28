@@ -233,6 +233,7 @@ header {
 .chart-card { order: 2; }
 @media (max-width: 680px) {
   .main-grid { grid-template-columns: 1fr; }
+  .main-grid .card:not(.chart-card) { order: 1; }
   .chart-card { order: 2; }
 }
 
@@ -833,7 +834,7 @@ function renderStats() {
   document.getElementById('stat-latest').textContent =
     s.latest ? `${toDisplay(s.latest.weight)} ${unitLabel()}` : '—';
   document.getElementById('stat-latest-date').textContent =
-    s.latest ? `${formatDate(s.latest.date)} · ${s.latest.time}` : 'No entries yet';
+    s.latest ? `${formatDate(s.latest.date)} · ${formatTime12(s.latest.time)}` : 'No entries yet';
 
   // Weekly average
   document.getElementById('stat-weekly').textContent =
@@ -941,7 +942,7 @@ function renderTable(newestId) {
 
     tr.innerHTML = `
       <td>${formatDate(entry.date)}</td>
-      <td>${entry.time}</td>
+      <td>${formatTime12(entry.time)}</td>
       <td class="td-weight">${toDisplay(entry.weight)}<span style="font-size:.7rem;color:var(--text-faint);margin-left:.25rem">${unitLabel()}</span></td>
       <td class="td-diff">${diffHTML}</td>
       <td style="color:var(--text-muted);font-size:.75rem;max-width:140px;overflow:hidden;text-overflow:ellipsis">${entry.note || ''}</td>
@@ -1093,6 +1094,13 @@ function formatDate(ds) {
 function shortDate(ds) {
   return new Date(ds + 'T00:00:00').toLocaleDateString(undefined,
     { month: 'short', day: 'numeric' });
+}
+function formatTime12(timeStr) {
+  // timeStr is "HH:MM" in 24h; convert to 12h with am/pm
+  const [h, m] = timeStr.split(':').map(Number);
+  const period = h >= 12 ? 'pm' : 'am';
+  const hour   = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
 }
 
 /* ============================================================
