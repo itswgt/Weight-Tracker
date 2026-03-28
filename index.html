@@ -230,8 +230,10 @@ header {
   margin-bottom: 1.25rem;
   animation: fadeUp 0.5s 0.2s ease both;
 }
+.chart-card { order: 2; }
 @media (max-width: 680px) {
   .main-grid { grid-template-columns: 1fr; }
+  .chart-card { order: 2; }
 }
 
 /* ── Shared card ────────────────────────────────────────── */
@@ -833,7 +835,7 @@ function renderStats() {
   document.getElementById('stat-latest').textContent =
     s.latest ? `${toDisplay(s.latest.weight)} ${unitLabel()}` : '—';
   document.getElementById('stat-latest-date').textContent =
-    s.latest ? formatDate(s.latest.date) : 'No entries yet';
+    s.latest ? `${formatDate(s.latest.date)} · ${s.latest.time}` : 'No entries yet';
 
   // Weekly average
   document.getElementById('stat-weekly').textContent =
@@ -921,8 +923,9 @@ function renderTable(newestId) {
 
   sorted.forEach((entry, idx) => {
     // "Change" compares to the chronologically previous entry
-    const prevInChronOrder = entries[entries.length - 1 - idx - 1];
-    const diff = prevInChronOrder ? entry.weight - prevInChronOrder.weight : null;
+    // sorted is newest-first, so the previous chronological entry is at idx+1
+    const prevEntry = sorted[idx + 1];
+    const diff = prevEntry ? entry.weight - prevEntry.weight : null;
 
     let diffHTML;
     if (diff === null) {
@@ -1200,6 +1203,8 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ren
   setDefaultDateTime();
   applyUnitUI(settings.unit);
   render();
+  // Auto-focus weight field so user can log immediately
+  document.getElementById('input-weight').focus();
 })();
 </script>
 </body>
