@@ -85,6 +85,17 @@ body {
   max-width: 920px;
   margin: 0 auto;
   padding: 2rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile: Log Weight form first, then stats/goal/history */
+@media (max-width: 680px) {
+  header           { order: 1; }
+  .main-grid       { order: 2; }
+  .stats-row       { order: 3; }
+  .goal-section    { order: 4; }
+  .entries-section { order: 5; }
 }
 
 /* ── Header ─────────────────────────────────────────────── */
