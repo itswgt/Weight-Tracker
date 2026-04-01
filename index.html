@@ -738,10 +738,14 @@ function setUnit(unit) {
    DATE / TIME DEFAULTS
    ============================================================ */
 function setDefaultDateTime() {
+  // Use local time (not UTC) so date/time matches the user's timezone
   const now = new Date();
-  document.getElementById('input-date').value = now.toISOString().slice(0, 10);
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const mo   = String(now.getMonth() + 1).padStart(2, '0');
+  const dd   = String(now.getDate()).padStart(2, '0');
+  const hh   = String(now.getHours()).padStart(2, '0');
+  const mm   = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('input-date').value = `${yyyy}-${mo}-${dd}`;
   document.getElementById('input-time').value = `${hh}:${mm}`;
 }
 
@@ -780,7 +784,8 @@ function addEntry() {
 }
 
 function deleteEntry(id) {
-  entries = entries.filter(e => e.id !== id);
+  const numId = Number(id);
+  entries = entries.filter(e => e.id !== numId);
   saveEntries(entries);
   render();
   showToast('Entry removed');
@@ -958,7 +963,7 @@ function renderTable(newestId) {
       <td class="td-diff">${diffHTML}</td>
       <td style="color:var(--text-muted);font-size:.75rem;max-width:140px;overflow:hidden;text-overflow:ellipsis">${entry.note || ''}</td>
       <td class="td-actions">
-        <button class="btn btn-danger-ghost" onclick="deleteEntry(${entry.id})" title="Delete entry">✕</button>
+        <button class="btn btn-danger-ghost delete-btn" data-id="${entry.id}" title="Delete entry">✕</button>
       </td>`;
     tbody.appendChild(tr);
   });
@@ -1198,6 +1203,12 @@ function render(newestId) {
    EVENT WIRING & INIT
    ============================================================ */
 document.getElementById('btn-export').addEventListener('click', exportCSV);
+
+// Event delegation for delete buttons (avoids inline onclick issues on mobile)
+document.getElementById('entries-body').addEventListener('click', function(e) {
+  const btn = e.target.closest('.delete-btn');
+  if (btn) deleteEntry(btn.dataset.id);
+});
 document.getElementById('btn-goal').addEventListener('click', openGoalModal);
 
 // Close goal modal when clicking the dark overlay
