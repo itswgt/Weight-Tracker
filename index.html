@@ -418,6 +418,69 @@ tbody td {
 .td-diff .same { color: var(--text-faint); }
 .td-actions    { text-align: right; }
 
+/* ── Mobile card list (replaces table on small screens) ─── */
+.entry-cards { display: none; }
+
+@media (max-width: 640px) {
+  #entries-table { display: none !important; }
+  .entry-cards   { display: block; }
+
+  .entry-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 0.5rem;
+  }
+  .entry-card:last-child { border-bottom: none; }
+
+  .entry-card-left { flex: 1; min-width: 0; }
+
+  .entry-card-weight {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .entry-card-weight span {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    margin-left: 0.2rem;
+  }
+
+  .entry-card-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .entry-card-diff {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .entry-card-del {
+    background: transparent;
+    border: none;
+    color: var(--text-faint);
+    font-size: 1.1rem;
+    padding: 0.5rem 0.6rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .entry-card-del:active { color: var(--danger); background: var(--danger-bg); }
+}
+
 /* Row animation for newly added entries */
 @keyframes rowSlideIn {
   from { opacity: 0; transform: translateX(-8px); }
@@ -639,6 +702,8 @@ tbody td {
         </thead>
         <tbody id="entries-body"></tbody>
       </table>
+      <!-- Mobile card list — rendered by JS, shown on small screens -->
+      <div class="entry-cards" id="entry-cards"></div>
     </div>
   </div>
 
@@ -937,6 +1002,8 @@ function renderTable(newestId) {
   // Display newest-first for reading convenience
   const sorted = [...entries].reverse();
   tbody.innerHTML = '';
+  const cardsEl = document.getElementById('entry-cards');
+  cardsEl.innerHTML = '';
 
   sorted.forEach((entry, idx) => {
     // "Change" compares to the chronologically previous entry
@@ -979,6 +1046,31 @@ function renderTable(newestId) {
     tr.querySelector('.td-actions').appendChild(delBtn);
 
     tbody.appendChild(tr);
+
+    // ── Also build a mobile card ──
+    const card = document.createElement('div');
+    card.className = 'entry-card' + (entry.id === newestId ? ' row-new' : '');
+
+    const diffColor = diff === null ? '' : diff > 0.05 ? 'color:var(--danger)' : diff < -0.05 ? 'color:var(--accent)' : 'color:var(--text-faint)';
+    const diffText  = diff === null ? '—' : diff > 0.05 ? `+${toDisplay(Math.abs(diff))}` : diff < -0.05 ? `−${toDisplay(Math.abs(diff))}` : '±0';
+
+    card.innerHTML = `
+      <div class="entry-card-left">
+        <div class="entry-card-weight">${toDisplay(entry.weight)}<span>${unitLabel()}</span></div>
+        <div class="entry-card-meta">${formatDate(entry.date)} · ${formatTime12(entry.time)}${entry.note ? ' · ' + entry.note : ''}</div>
+      </div>
+      <div class="entry-card-diff" style="${diffColor}">${diffText}</div>`;
+
+    const cardDel = document.createElement('button');
+    cardDel.className = 'entry-card-del';
+    cardDel.title = 'Delete entry';
+    cardDel.innerHTML = '&#x2715;';
+    cardDel.addEventListener('click', function(e) {
+      e.stopPropagation();
+      deleteEntry(entry.id);
+    });
+    card.appendChild(cardDel);
+    document.getElementById('entry-cards').appendChild(card);
   });
 }
 
