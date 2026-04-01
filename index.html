@@ -354,9 +354,11 @@ input:focus {
 
 .btn-danger-ghost {
   background: transparent; color: var(--text-faint); border: none;
-  padding: 0.3rem 0.45rem; font-size: 0.78rem; border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem; font-size: 0.9rem; border-radius: var(--radius-sm);
+  min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
 }
 .btn-danger-ghost:hover { color: var(--danger); background: var(--danger-bg); }
+.btn-danger-ghost:active { color: var(--danger); background: var(--danger-bg); }
 
 /* ── Chart ───────────────────────────────────────────────── */
 .chart-card { min-height: 230px; display: flex; flex-direction: column; }
@@ -956,15 +958,26 @@ function renderTable(newestId) {
     const tr = document.createElement('tr');
     if (entry.id === newestId) tr.className = 'row-new';
 
+    // Build cells individually so delete button uses addEventListener (reliable on mobile)
     tr.innerHTML = `
       <td>${formatDate(entry.date)}</td>
       <td>${formatTime12(entry.time)}</td>
       <td class="td-weight">${toDisplay(entry.weight)}<span style="font-size:.7rem;color:var(--text-faint);margin-left:.25rem">${unitLabel()}</span></td>
       <td class="td-diff">${diffHTML}</td>
       <td style="color:var(--text-muted);font-size:.75rem;max-width:140px;overflow:hidden;text-overflow:ellipsis">${entry.note || ''}</td>
-      <td class="td-actions">
-        <button class="btn btn-danger-ghost delete-btn" data-id="${entry.id}" title="Delete entry">✕</button>
-      </td>`;
+      <td class="td-actions"></td>`;
+
+    // Create delete button with direct event listener — no inline onclick, no data attribute lookup
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger-ghost delete-btn';
+    delBtn.title = 'Delete entry';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      deleteEntry(entry.id);
+    });
+    tr.querySelector('.td-actions').appendChild(delBtn);
+
     tbody.appendChild(tr);
   });
 }
@@ -1204,11 +1217,7 @@ function render(newestId) {
    ============================================================ */
 document.getElementById('btn-export').addEventListener('click', exportCSV);
 
-// Event delegation for delete buttons (avoids inline onclick issues on mobile)
-document.getElementById('entries-body').addEventListener('click', function(e) {
-  const btn = e.target.closest('.delete-btn');
-  if (btn) deleteEntry(btn.dataset.id);
-});
+// Delete buttons use direct addEventListener per row (set in renderTable)
 document.getElementById('btn-goal').addEventListener('click', openGoalModal);
 
 // Close goal modal when clicking the dark overlay
